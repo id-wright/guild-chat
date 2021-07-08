@@ -1,0 +1,137 @@
+#!/usr/bin/env node
+
+/**
+ * Module dependencies.
+ */
+
+var app = require('../app');
+var debug = require('debug')('guild-chat-app:server');
+var http = require('http');
+var { Server } = require('socket.io');
+
+/**
+ * Get port from environment and store in Express.
+ */
+
+var port = normalizePort(process.env.PORT || '3000');
+app.set('port', port);
+
+/**
+ * Create HTTP server.
+ */
+
+var server = http.createServer(app);
+
+/**
+ * Init Socket.io and define listeners
+ */
+
+var io = new Server(server);
+var rooms = {}
+
+io.on('connection', socket => {
+  console.log('User connected with socket ID ' + socket.id);
+
+  socket.on('join room', person => {
+    roomName = person.roomName;
+    socket.join(roomName);
+    let joinedRoom = rooms[roomName];
+    
+    if (typeof joinedRoom === 'undefined') {
+      rooms[roomName] = {}
+      rooms[roomName].members = {};
+      joinedRoom = rooms[roomName];
+    }
+
+    joinedRoom.members[socket.id] = person;
+    io.in(roomName).emit('server message', person.nickname + ' has joined the room.');
+    io.in(roomName).emit('update member list', joinedRoom.members);
+  });
+
+  socket.on('message', (msg, person) => {
+    io.in(person.roomName).emit('message', person.nickname, msg);
+  });
+
+  socket.on('disconnecting', reason => {
+    let joinedRooms = socket.rooms;
+
+    joinedRooms.forEach(room => {
+      if (room != socket.id) {
+        io.in(room).emit('server message', rooms[room].members[socket.id].nickname + ' has left the room.');
+        delete rooms[room].members[socket.id];
+        io.in(room).emit('update member list', rooms[room].members);
+
+        if (!Object.keys(rooms[room]).length) delete rooms[room];
+        console.log(socket.id + ' has disconnected (reason: ' + reason + ')');
+      }
+    });
+  });
+});
+
+/**
+ * Listen on provided port, on all network interfaces.
+ */
+
+server.listen(port);
+server.on('error', onError);
+server.on('listening', onListening);
+
+/**
+ * Normalize a port into a number, string, or false.
+ */
+
+function normalizePort(val) {
+  var port = parseInt(val, 10);
+
+  if (isNaN(port)) {
+    // named pipe
+    return val;
+  }
+
+  if (port >= 0) {
+    // port number
+    return port;
+  }
+
+  return false;
+}
+
+/**
+ * Event listener for HTTP server "error" event.
+ */
+
+function onError(error) {
+  if (error.syscall !== 'listen') {
+    throw error;
+  }
+
+  var bind = typeof port === 'string'
+    ? 'Pipe ' + port
+    : 'Port ' + port;
+
+  // handle specific listen errors with friendly messages
+  switch (error.code) {
+    case 'EACCES':
+      console.error(bind + ' requires elevated privileges');
+      process.exit(1);
+      break;
+    case 'EADDRINUSE':
+      console.error(bind + ' is already in use');
+      process.exit(1);
+      break;
+    default:
+      throw error;
+  }
+}
+
+/**
+ * Event listener for HTTP server "listening" event.
+ */
+
+function onListening() {
+  var addr = server.address();
+  var bind = typeof addr === 'string'
+    ? 'pipe ' + addr
+    : 'port ' + addr.port;
+  debug('Listening on ' + bind);
+}

@@ -1,0 +1,15 @@
+div(class="modal fade" id="joinRoomModal" tabindex="-1" role="dialog")
+  div(class="modal-dialog modal-dialog-centered" role="document")
+    div(class="modal-content")
+      div(class="modal-header")
+        h5(class="modal-title") Please enter a nickname and join a room.
+      div(class="modal-body")
+        form(id="joinRoomForm" action="")
+          div(class="form-group")
+            label(for="roomNameModal") Room Name:
+            input(type="text" class="form-control" id="roomNameModal" placeholder="room name" autocomplete="off")
+          div(class="form-group")
+            label(for="nickname") Nickname:
+            input(type="text" class="form-control" id="nickname" placeholder="nickname" autocomplete="off")
+          button(type="submit" class="btn btn-primary") Join
+          p(id="modalFormError")

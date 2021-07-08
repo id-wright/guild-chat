@@ -1,0 +1,16 @@
+extends layout
+
+block content
+  div(class="row border border-black rounded" style="height: 30rem;")
+    div(class="col-9 h-100")
+      div(id="chatDiv" class="row overflow-auto" style="height: 90%; padding-left: 15px; padding-right: 15px;")
+        ul(id="chatMessages" class="px-0" style="list-style-type: none;")
+      form(id="chatForm" action="")
+        div(class="input-group mb-3")
+          input(id="chatMessageInput" class="form-control" autocomplete="off")
+          div(class="input-group-append")
+            button(class="btn btn-outline-secondary") Send
+    div(id="roomInfo" class="col-3 border border-black rounded")
+      p #[strong Room: ]#[br]#[span(id="roomName")]
+      strong Members: #[span(id="memberCount")]#[br]
+      ul(id="memberList" class="px-0" style="list-style-type: none;")
